@@ -3,7 +3,7 @@ name: prac7
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-push-to-dh:
