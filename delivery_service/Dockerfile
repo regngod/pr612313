@@ -15,7 +15,7 @@ RUN pip install -r /code/requirements.txt
 COPY ./food_delivery /code
 
 # Копируем файл базы данных
-COPY ./food_delivery.db /code/food_delivery.db
+COPY ./delivery_service/food_delivery.db /code/food_delivery.db
 
 # Открываем порт 8000
 EXPOSE 8000
