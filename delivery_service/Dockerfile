@@ -12,7 +12,7 @@ RUN pip install --upgrade pip
 RUN pip install -r /code/requirements.txt
 
 # Копируем код приложения
-COPY ./food_delivery /code
+COPY ./delivery_service /code
 
 # Копируем файл базы данных
 COPY ./delivery_service/food_delivery.db /code/food_delivery.db
