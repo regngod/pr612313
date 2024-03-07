@@ -1,0 +1,27 @@
+name: prac7
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push-to-dh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin
+          docker buildx create --use
+          docker buildx inspect
+          docker buildx build --platform linux/amd64,linux/arm64 -t regngod/delivery-service:latest -t regngod/delivery-service:${{ github.sha }} --push -f delivery_service/Dockerfile .
+
