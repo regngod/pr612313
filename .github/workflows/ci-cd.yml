@@ -25,3 +25,21 @@ jobs:
           docker buildx inspect
           docker buildx build --platform linux/amd64,linux/arm64 -t renggod/prac7:latest -t renggod/prac7:${{ github.sha }} --push -f delivery_service/Dockerfile .
 
+  build-and-push-yc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build docker image
+        run: |
+          docker build -f ../pr612313/payment_service/Dockerfile --tag cr.yandex/${{ secrets.YC_REGISTRY_ID }}/payment_service:latest ../pr612313
+
+      - name: Login to YC Registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: cr.yandex
+          username: json_key
+          password: ${{ secrets.YC_KEYS }}
+
+      - name: Push tag YC Registry
+        run: |
+          docker push cr.yandex/${{ secrets.YC_REGISTRY_ID }}/payment_service:latest
