@@ -1,41 +1,52 @@
-import unittest
-import requests
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from main import create_food_delivery_and_record, FoodDelivery
 
-delivery_url = 'http://localhost:8080'
-add_food_delivery_url = f'{delivery_url}/food-delivery'
-get_food_delivery_url = f'{delivery_url}/food-delivery'
+@pytest.fixture(scope="module")
+def db_session():
+    # Создаем тестовую базу данных SQLite и сессию SQLAlchemy
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = SessionLocal()
 
+    # Создаем таблицы в тестовой базе данных
+    FoodDelivery.metadata.create_all(bind=engine)
 
-class TestIntegration(unittest.TestCase):
+    yield session
 
-    def test_create_food_delivery(self):
-        # Отправляем POST-запрос для создания доставки еды
-        delivery_data = {"order_id": 1}
-        res = requests.post(f"{add_food_delivery_url}/1", json=delivery_data)
+    # Очищаем таблицы после выполнения тестов
+    FoodDelivery.__table__.drop(engine)
 
-        # Проверяем, что запрос завершился успешно (HTTP статус 200)
-        self.assertEqual(res.status_code, 200)
+def test_create_food_delivery_and_record(db_session):
+    # Тест создания доставки еды и записи в базу данных
+    order_id = 12345
+    result = create_food_delivery_and_record(db_session, order_id)
 
-        # Проверяем, что в ответе есть сообщение о создании доставки и delivery_id
-        self.assertTrue('message' in res.json())
-        self.assertTrue('delivery_id' in res.json())
+    # Проверяем, что доставка создана и записана в базу данных
+    assert result["order_id"] == order_id
+    assert result["payment_status"] in ["paid", "pending"]
+    assert result["food_status"] == "prepared"
 
-        self.delivery_id = res.json()['delivery_id']
+    # Проверяем, что доставка присутствует в базе данных
+    db_food_delivery = db_session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).first()
+    assert db_food_delivery is not None
+    assert db_food_delivery.order_id == order_id
+    assert db_food_delivery.status in ["delivered", "not delivered"]
 
-    def test_get_data_of_food_delivery(self):
-        # Создаем доставку еды перед получением данных
-        self.test_create_food_delivery()
+def test_create_food_delivery_duplicate(db_session):
+    # Создаем доставку с определенным order_id
+    order_id = 12345
+    create_food_delivery_and_record(db_session, order_id)
 
-        # Отправляем GET-запрос для получения данных о доставке еды
-        res = requests.get(f"{get_food_delivery_url}/1")
+    # Пытаемся создать доставку с тем же order_id еще раз
+    # Ожидаем получить ошибку, так как заказ уже существует
+    with pytest.raises(Exception):
+        create_food_delivery_and_record(db_session, order_id)
 
-        # Проверяем, что запрос завершился успешно (HTTP статус 200)
-        self.assertEqual(res.status_code, 200)
-
-        # Проверяем, что в ответе есть order_id и status
-        self.assertTrue('order_id' in res.json())
-        self.assertTrue('status' in res.json())
-
+    # Проверяем, что в базе данных все еще существует только одна запись с данным order_id
+    count = db_session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).count()
+    assert count == 1
 
 if __name__ == '__main__':
     unittest.main()
