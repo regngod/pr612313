@@ -39,8 +39,8 @@ class TestComponent(unittest.TestCase):
 
     def test_fetch_food_delivery(self):
         res = requests.get(get_food_delivery_url)
-        self.assertIn("Food Delivery not found", res.text)
-
+        self.assertEqual(res.status_code, 404)  # Проверяем, что получен статус 404
+        self.assertEqual(res.json()["detail"], "Food delivery not found")
     def test_cancel_food_delivery(self):
         # Отправляем DELETE-запрос для отмены доставки еды
         res = requests.delete(f"{add_food_delivery_url}/cancel/1")
