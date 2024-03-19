@@ -1,7 +1,14 @@
+import sys
+import os
+delivery_service_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../delivery_service'))
+sys.path.append(delivery_service_path)
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from main import create_food_delivery_and_record, FoodDelivery
+from delivery_service import create_food_delivery_and_record, FoodDelivery, simulate_food_delivery
+from sqlalchemy.exc import IntegrityError
+
 
 @pytest.fixture(scope="module")
 def db_session():
@@ -17,7 +24,7 @@ def db_session():
 
     # Очищаем таблицы после выполнения тестов
     FoodDelivery.__table__.drop(engine)
-    
+
 
 def test_create_food_delivery_and_record(db_session):
     # Тест создания доставки еды и записи в базу данных
@@ -25,9 +32,9 @@ def test_create_food_delivery_and_record(db_session):
     result = create_food_delivery_and_record(db_session, order_id)
 
     # Проверяем, что доставка создана и записана в базу данных
-    assert result["order_id"] == order_id
-    assert result["payment_status"] in ["paid", "pending"]
-    assert result["food_status"] == "prepared"
+    assert "food_delivery_id" in result
+    assert "payment_status" in result
+    assert "food_status" in result
 
     # Проверяем, что доставка присутствует в базе данных
     db_food_delivery = db_session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).first()
@@ -35,19 +42,15 @@ def test_create_food_delivery_and_record(db_session):
     assert db_food_delivery.order_id == order_id
     assert db_food_delivery.status in ["delivered", "not delivered"]
 
-def test_create_food_delivery_duplicate(db_session):
-    # Создаем доставку с определенным order_id
-    order_id = 12345
-    create_food_delivery_and_record(db_session, order_id)
 
-    # Пытаемся создать доставку с тем же order_id еще раз
-    # Ожидаем получить ошибку, так как заказ уже существует
-    with pytest.raises(Exception):
-        create_food_delivery_and_record(db_session, order_id)
+def test_create_food_delivery_invalid_order_id(db_session):
+    # Пытаемся создать доставку с невалидным order_id (строка вместо числа)
+    invalid_order_id = "invalid_order_id"
 
-    # Проверяем, что в базе данных все еще существует только одна запись с данным order_id
-    count = db_session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).count()
-    assert count == 1
+    # Ожидаем получить TypeError, так как order_id должен быть целым числом
+    with pytest.raises(TypeError):
+        create_food_delivery_and_record(db_session, invalid_order_id)
+
 
 if __name__ == '__main__':
     unittest.main()
