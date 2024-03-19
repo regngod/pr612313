@@ -17,6 +17,7 @@ def db_session():
 
     # Очищаем таблицы после выполнения тестов
     FoodDelivery.__table__.drop(engine)
+    
 
 def test_create_food_delivery_and_record(db_session):
     # Тест создания доставки еды и записи в базу данных
