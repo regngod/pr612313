@@ -1,17 +1,30 @@
 import sys
 import os
-from unittest.mock import MagicMock
-
 delivery_service_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../delivery_service'))
 sys.path.append(delivery_service_path)
 
 import pytest
-from delivery_service import create_food_delivery_and_record, simulate_food_delivery
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from delivery_service import create_food_delivery_and_record, FoodDelivery, simulate_food_delivery
+from sqlalchemy.exc import IntegrityError
+
 
 @pytest.fixture(scope="module")
 def db_session():
-    # Создаем фиктивный объект базы данных
-    return MagicMock()
+    # Создаем тестовую базу данных SQLite и сессию SQLAlchemy
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = SessionLocal()
+
+    # Создаем таблицы в тестовой базе данных
+    FoodDelivery.metadata.create_all(bind=engine)
+
+    yield session
+
+    # Очищаем таблицы после выполнения тестов
+    FoodDelivery.__table__.drop(engine)
+
 
 def test_create_food_delivery_and_record(db_session):
     # Тест создания доставки еды и записи в базу данных
@@ -23,8 +36,12 @@ def test_create_food_delivery_and_record(db_session):
     assert "payment_status" in result
     assert "food_status" in result
 
-    # Проверяем, что была вызвана функция add хотя бы один раз
-    db_session.add.assert_called_once()
+    # Проверяем, что доставка присутствует в базе данных
+    db_food_delivery = db_session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).first()
+    assert db_food_delivery is not None
+    assert db_food_delivery.order_id == order_id
+    assert db_food_delivery.status in ["delivered", "not delivered"]
+
 
 def test_create_food_delivery_invalid_order_id(db_session):
     # Пытаемся создать доставку с невалидным order_id (строка вместо числа)
@@ -37,4 +54,3 @@ def test_create_food_delivery_invalid_order_id(db_session):
 
 if __name__ == '__main__':
     unittest.main()
-
