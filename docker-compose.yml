@@ -1,5 +1,6 @@
 version: '3.9'
 
+
 services:
   delivery:
     build:
@@ -10,7 +11,8 @@ services:
     depends_on:
       - payment
     environment:
-      - DATABASE_URL=sqlite:///./test.db
+      - DATABASE_URL=sqlite:///./food_delivery.db
+    container_name: delivery_service
 
   payment:
     build:
@@ -20,3 +22,15 @@ services:
       - "8001:80"
     environment:
       - DATABASE_URL=sqlite:///./payment.db
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.6
+    ports:
+      - "8180:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: 12345
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    container_name: keycloak
+    command: -v start-dev --import-realm

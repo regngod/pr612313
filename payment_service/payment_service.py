@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import uvicorn
+import os
+
 
 app = FastAPI()
 
@@ -54,3 +57,5 @@ def read_payment(order_id: int):
         raise HTTPException(status_code=404, detail="Payment not found")
 
     return {"order_id": payment.order_id, "status": payment.status}
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=80)
