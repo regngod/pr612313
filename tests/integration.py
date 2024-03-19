@@ -1,11 +1,20 @@
 import unittest
 import os
+import sys
+import requests
+import time
+
+# Добавляем путь к модулю delivery_service для корректного импорта
+delivery_service_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../delivery_service'))
+sys.path.append(delivery_service_path)
+
+# Импортируем необходимые компоненты для тестирования
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from delivery_service import create_food_delivery_and_record, FoodDelivery, simulate_food_delivery
-from sqlalchemy.exc import IntegrityError
+from delivery_service import create_food_delivery_and_record, FoodDelivery
 
-class TestFoodDelivery(unittest.TestCase):
+class TestComponent(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         # Создаем тестовую базу данных SQLite и сессию SQLAlchemy
@@ -21,29 +30,43 @@ class TestFoodDelivery(unittest.TestCase):
         # Очищаем таблицы после выполнения всех тестов
         FoodDelivery.__table__.drop(cls.engine)
 
-    def test_create_food_delivery_and_record(self):
-        # Тест создания доставки еды и записи в базу данных
-        order_id = 12345
-        result = create_food_delivery_and_record(self.session, order_id)
+    def wait_for_service(self, url, max_attempts=10):
+        # Ожидаем доступности сервиса по указанному URL-адресу
+        attempts = 0
+        while attempts < max_attempts:
+            try:
+                requests.get(url)
+                break
+            except requests.ConnectionError:
+                time.sleep(1)
+                attempts += 1
 
-        # Проверяем, что доставка создана и записана в базу данных
-        self.assertIn("food_delivery_id", result)
-        self.assertIn("payment_status", result)
-        self.assertIn("food_status", result)
+    def setUp(self):
+        # Ожидаем доступности сервиса перед каждым тестом
+        self.wait_for_service('http://localhost:8000')
 
-        # Проверяем, что доставка присутствует в базе данных
-        db_food_delivery = self.session.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).first()
-        self.assertIsNotNone(db_food_delivery)
-        self.assertEqual(db_food_delivery.order_id, order_id)
-        self.assertIn(db_food_delivery.status, ["delivered", "not delivered"])
+    def test_create_food_delivery(self):
+        # Тест создания доставки еды и проверки HTTP-статуса
+        res = requests.post('http://localhost:8000/food-delivery/2')
+        self.assertEqual(res.status_code, 200)
 
-    def test_create_food_delivery_invalid_order_id(self):
-        # Пытаемся создать доставку с невалидным order_id (строка вместо числа)
-        invalid_order_id = "invalid_order_id"
+    def test_get_data_of_food_delivery(self):
+        # Тест получения данных о доставке еды и проверки содержимого
+        res = requests.get('http://localhost:8000/food-delivery/2').json()
+        self.assertIn("order_id", res)
+        self.assertIn("status", res)
+        self.assertEqual(res["order_id"], 2)
 
-        # Ожидаем получить TypeError, так как order_id должен быть целым числом
-        with self.assertRaises(TypeError):
-            create_food_delivery_and_record(self.session, invalid_order_id)
+    def test_fetch_food_delivery(self):
+        # Тест на запрос данных о несуществующей доставке еды и проверку HTTP-статуса
+        res = requests.get('http://localhost:8000/food-delivery/100')
+        self.assertEqual(res.status_code, 404)
+
+    def test_cancel_food_delivery(self):
+        # Тест на отмену доставки еды и проверку HTTP-статуса
+        res = requests.delete('http://localhost:8000/food-delivery/cancel/1')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue('message' in res.json())
 
 if __name__ == '__main__':
     unittest.main()
