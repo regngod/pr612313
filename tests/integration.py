@@ -4,7 +4,6 @@ delivery_service_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
 sys.path.append(delivery_service_path)
 
 import pytest
-import unittest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from delivery_service import create_food_delivery_and_record, FoodDelivery, simulate_food_delivery
@@ -51,7 +50,3 @@ def test_create_food_delivery_invalid_order_id(db_session):
     # Ожидаем получить TypeError, так как order_id должен быть целым числом
     with pytest.raises(TypeError):
         create_food_delivery_and_record(db_session, invalid_order_id)
-
-
-if __name__ == '__main__':
-    unittest.main()

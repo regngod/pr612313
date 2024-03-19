@@ -2,7 +2,7 @@ import requests
 import time
 import unittest
 
-delivery_url = 'http://0.0.0.0:80'
+delivery_url = 'http://localhost:8000'
 add_food_delivery_url = f'{delivery_url}/food-delivery'
 get_food_delivery_url = f'{delivery_url}/food-delivery'
 
