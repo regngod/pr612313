@@ -3,7 +3,7 @@ import os
 delivery_service_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../delivery_service'))
 sys.path.append(delivery_service_path)
 
-import pytest
+import unittest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from delivery_service import create_food_delivery_and_record, FoodDelivery, simulate_food_delivery
