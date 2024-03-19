@@ -114,7 +114,6 @@ def read_food_delivery(order_id: int):
         db = SessionLocal()
         food_delivery = db.query(FoodDelivery).filter(FoodDelivery.order_id == order_id).first()
         db.close()
-
         if not food_delivery:
             raise HTTPException(status_code=404, detail="Food delivery not found")
 
