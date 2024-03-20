@@ -13,7 +13,6 @@ KEYCLOAK_URL = "http://0.0.0.0:8180/"
 KEYCLOAK_CLIENT_ID = "mandzhiev"
 KEYCLOAK_REALM = "prc9"
 KEYCLOAK_CLIENT_SECRET = "xYR5e9THASbiSfW9XdlsKaLxFWGbwlK1"
-#KEYCLOAK_CLIENT_SECRET2 = "AliwqwCWP6RvWgENTnWaFvopI3G5s7lm"
 
 keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_URL,
                                   client_id=KEYCLOAK_CLIENT_ID,
@@ -21,6 +20,10 @@ keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_URL,
                                   client_secret_key=KEYCLOAK_CLIENT_SECRET)
 
 user_token = ""
+
+
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
 
 
 @app.post("/get-token")

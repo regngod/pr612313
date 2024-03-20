@@ -13,6 +13,8 @@ services:
     environment:
       - DATABASE_URL=sqlite:///./food_delivery.db
     container_name: delivery_service
+    networks:
+      - app-network
 
   payment:
     build:
@@ -22,6 +24,8 @@ services:
       - "8001:80"
     environment:
       - DATABASE_URL=sqlite:///./payment.db
+    networks:
+      - app-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.6
@@ -33,4 +37,55 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import
     container_name: keycloak
+    networks:
+      - app-network
     command: -v start-dev --import-realm
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - app-network
+    command: -config.file=/etc/loki/local-config.yaml -target=all
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    environment:
+      - GF_EXPLORE_ENABLED=true
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.max-block-duration=30m'
+      - '--storage.tsdb.min-block-duration=30m'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  prometheus:
+    name: prometheus
+  grafana-storage:
+    driver: local
