@@ -17,6 +17,8 @@ keycloak-client==0.15.4
 MarkupSafe==2.1.5
 packaging==24.0
 pluggy==1.4.0
+prometheus-client==0.20.0
+prometheus-fastapi-instrumentator==7.0.0
 pyasn1==0.5.1
 pydantic==2.6.4
 pydantic-core==2.16.3
@@ -33,4 +35,3 @@ typing-extensions==4.10.0
 urllib3==2.2.1
 uvicorn==0.28.0
 werkzeug==3.0.1
-
