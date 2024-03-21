@@ -50,6 +50,17 @@ services:
       - app-network
     command: -config.file=/etc/loki/local-config.yaml -target=all
 
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./docker-config.yaml:/etc/promtail/docker-config.yaml
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    networks:
+      - app-network
+    command: -config.file=/etc/promtail/docker-config.yaml
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -79,6 +90,20 @@ services:
       - '--web.enable-lifecycle'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+
+
+  node:
+    image: prom/node-exporter:latest
+    container_name: node
+    ports:
+      - "9100:9100"
+    networks:
+      - app-network
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
 
 networks:
   app-network:

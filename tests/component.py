@@ -14,7 +14,7 @@ class TestFoodDelivery(unittest.TestCase):
 
     def test_read_food_delivery(self):
         # Отправляем GET-запрос на /food-delivery/{order_id}
-        order_id = 123  # Предположим, что это ID созданной доставки
+        order_id = 123 
         response = requests.get(f"http://localhost:8000/food-delivery/{order_id}")
 
         # Проверяем, что сервер возвращает код статуса

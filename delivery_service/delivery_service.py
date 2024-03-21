@@ -12,7 +12,7 @@ app = FastAPI()
 KEYCLOAK_URL = "http://0.0.0.0:8180/"
 KEYCLOAK_CLIENT_ID = "mandzhiev"
 KEYCLOAK_REALM = "prc9"
-KEYCLOAK_CLIENT_SECRET = "xYR5e9THASbiSfW9XdlsKaLxFWGbwlK1"
+KEYCLOAK_CLIENT_SECRET = "qCQxQdZlskZ0icm5XSJSxnmg8M5qdj9b"
 
 keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_URL,
                                   client_id=KEYCLOAK_CLIENT_ID,
@@ -131,4 +131,4 @@ def read_food_delivery(order_id: int):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=8090)
