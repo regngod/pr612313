@@ -59,4 +59,4 @@ def read_payment(order_id: int):
     return {"order_id": payment.order_id, "status": payment.status}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=81)
+    uvicorn.run(app, host="0.0.0.0", port=os.getenv("PORT"))
